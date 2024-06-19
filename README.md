@@ -83,15 +83,36 @@ Install packages:
 Next,
 > `bootctl --path=/boot install`
 
-(Add the path here)  
+Go into `/boot/loader`  
 Edit `loader.conf`:
-> `#console-mode keep`
+> `#console-mode keep` 
 > `default arch-*`
 
+Go into `/boot/loader/entries` (not sure if the path is right)  
 Edit `arch.conf`:
 > `title    Arch Linux`  
 > `linux    /vmlinuz-linux`  
-> `initrd   /initramfs-linux.img`
+> `initrd   /initramfs-linux.img`  
 > `options  root=/dev/GROUPNAME/rootname rw`
 
- 
+Enable NetworkManager: 
+> `systemctl enable NetworkManager`
+
+Add new user: 
+> `useradd -mG wheel username`  
+> `passwd username`  
+> `EDITOR=vim visudo`
+
+Edit `/etc/sudoers.tmp` by uncommenting `%wheel ALL=(ALL:ALL) ALL`  
+
+`reboot` the system.  
+
+Install a terminal and a web browser to get you started.
+> `sudo pacman -Syu alacritty firefox`
+
+Install graphic drivers:
+> `sudo pacman -Syu vulkan-icd-loader vulkan-intel`
+
+### Install for gaming:
+Enable multilib first:
+> `sudo pacman -Syu lutris wine wine-mono`
