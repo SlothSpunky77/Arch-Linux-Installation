@@ -1,5 +1,5 @@
 # Arch-Linux-Installation
-UEFI + systemd-boot + LVM + swap file + tablet mode  
+UEFI + systemd-boot + LVM + swap file + Xorg + awesomeWM + tablet mode  
 Intel i7 12th Gen, Iris Xe Graphics, 512G SSD, touch screen
 
 ## Get Started:
@@ -60,3 +60,38 @@ Format and mount the home partition:
 
 Get essential packages:
 > `pacstrap -K /mnt base linux linux-firmware vim lvm2`
+
+Next,
+> `genfstab -U /mnt >> /mnt/etc/fstab`
+
+Check with `cat /mnt/etc/fstab`  
+
+Edit the `/etc/hosts` file:
+> `vim /etc/hosts`  
+> `# See hosts(5) for details.`  
+> `127.0.0.1    localhost`  
+> `::1          localhost`  
+> `127.0.1.1    username.localdomain    username`
+
+Edit the `/etc/mkinitcpio.conf` file:  
+`HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystem fsck)`  
+
+(enter into the root missing)
+Install packages:  
+> `pacman -Syu efibootmgr metworkmanager base-devel linux-headers iwd linux-firmware pipewire-audio xorg xorg-xinit xorg-server awesome picom mesa`
+
+Next,
+> `bootctl --path=/boot install`
+
+(Add the path here)  
+Edit `loader.conf`:
+> `#console-mode keep`
+> `default arch-*`
+
+Edit `arch.conf`:
+> `title    Arch Linux`  
+> `linux    /vmlinuz-linux`  
+> `initrd   /initramfs-linux.img`
+> `options  root=/dev/GROUPNAME/rootname rw`
+
+ 
