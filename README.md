@@ -111,7 +111,14 @@ Install a terminal and a web browser to get you started:
 > `sudo pacman -Syu alacritty firefox`
 
 Install graphic drivers:
-> `sudo pacman -Syu vulkan-icd-loader vulkan-intel`
+> `sudo pacman -Syu vulkan-icd-loader vulkan-intel intel-ucode`
+
+Edit `arch.conf` in `/boot/loader/entries`:
+> `title	Arch Linux`    
+> `linux	/vmlinuz-linux`    
+> `initrd	/initramfs-linux.img`    
+> `initrd  /intel-ucode.img`    
+> `options	root=/dev/LVM00/lvmroot rw`    
 
 ### Install for gaming:
 Enable multilib first:
