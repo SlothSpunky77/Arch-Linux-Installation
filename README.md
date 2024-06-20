@@ -122,4 +122,4 @@ Edit `arch.conf` in `/boot/loader/entries`:
 
 ### Install for gaming:
 Enable multilib first:
-> `sudo pacman -Syu lutris wine wine-mono`
+> `sudo pacman -Syu steam lutris wine wine-mono`
