@@ -21,7 +21,7 @@ Test your connection using `ping archlinux.org`
 Next,
 > `timedatectl set-ntp true`  
 
-Partitioning your disk (LVM):
+### Partitioning your disk (LVM):
 > `fdisk -l`  
 > `fdisk /dev/thenameofyourdisk`
 
