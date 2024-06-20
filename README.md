@@ -107,7 +107,7 @@ Edit `/etc/sudoers.tmp` by uncommenting `%wheel ALL=(ALL:ALL) ALL`
 
 `reboot` the system.  
 ## Outside your live environment (normal usage):    
-Install a terminal and a web browser to get you started.
+Install a terminal and a web browser to get you started:
 > `sudo pacman -Syu alacritty firefox`
 
 Install graphic drivers:
