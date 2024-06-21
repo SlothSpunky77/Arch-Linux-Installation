@@ -123,3 +123,20 @@ Edit `arch.conf` in `/boot/loader/entries`:
 ### Install for gaming:
 Enable multilib first:
 > `sudo pacman -Syu steam lutris wine wine-mono`
+
+## Swapfile for hibernation:
+Find your swapfile offset:    
+> `filefrag -v swap_file`
+
+From the output, take the first number from the physical offset.    
+Add the `resume=` and `resume-offset=` flags to your `arch.conf`:
+> `title	Arch Linux`    
+> `linux	/vmlinuz-linux`    
+> `initrd	/initramfs-linux.img`    
+> `initrd	/intel-ucode.img`    
+> `options	root=/dev/LVM00/lvmroot resume=/dev/LVM00/lvmroot resume_offset=3887104 rw`
+
+Edit the `/etc/mkinitcpio.conf` file to include the `resume` flag:    
+`HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystem resume fsck)`    
+Regenerate using `sudo mkinitcpio -p linux`
+
