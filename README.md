@@ -138,5 +138,5 @@ Add the `resume=` and `resume-offset=` flags to your `arch.conf`:
 
 Edit the `/etc/mkinitcpio.conf` file to include the `resume` flag:    
 `HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystem resume fsck)`    
-Regenerate using `sudo mkinitcpio -p linux` and you're good to go.
+Regenerate using `sudo mkinitcpio -p linux` and you're good to go after a `reboot`.
 
