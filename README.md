@@ -175,7 +175,7 @@ Install a terminal and a web browser to get you started:
 > `sudo pacman -Syu alacritty firefox nautilus gvfs-mtp`
 
 Install graphic drivers:
-> `sudo pacman -Syu vulkan-icd-loader vulkan-intel intel-ucode`
+> `sudo pacman -Syu vulkan-icd-loader vulkan-intel intel-ucode intel-media-driver`
 
 Edit `arch.conf` in `/boot/loader/entries`:
 > `title	Arch Linux`    
