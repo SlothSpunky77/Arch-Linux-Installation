@@ -22,10 +22,29 @@ Next,
 > `timedatectl set-ntp true`  
 
 ### Partitioning your disk (LVM):
-> `fdisk -l`  
+> `fdisk -l`    
 > `fdisk /dev/thenameofyourdisk`
 
-(Fill this section)
+I will be creating two partitions, one for EFI and the other for LVM.    
+Create a GPT:
+> `Command (m for help): g`
+
+First partition:
+> `Command (m for help): n`
+
+Accept the defaults (hit enter on a blank entry) but for the last sector, use `+500M` 
+
+Second partition:
+> `Command (m for help): n`
+
+Accept all the defaults. For the system to know the type,
+> `Command (m for help): t`
+
+Accept the defaults if it matches and use `L` when prompted to show the list of types. Use the number against LVM in the list:
+> `Partition type (type L to list all types): xx`
+
+Write the changes:
+> `Command (m for help): w`
 
 Format the EFI partition.
 > `mkfs.fat -F32 /dev/devicename1`
@@ -66,17 +85,57 @@ Next,
 
 Check with `cat /mnt/etc/fstab`  
 
+### Enter into '/':    
+> `arch-chroot /mnt`
+
+Make a link for your localtime (figure out your own timezone though):
+> `ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime`
+
+More commands:
+> `hwclock --systohc`
+
+Edit `/etc/locale.gen` to uncomment `en_US.UTF-8 UTF-8` and then generate the locale:
+> `locale-gen`    
+
+Edit `/etc/locale.conf` to insert `LANG=en_US.UTF-8`    
+Edit `/etc/hostname` to insert a custom `hostname`    
 Edit the `/etc/hosts` file:
 > `vim /etc/hosts`  
 > `# See hosts(5) for details.`  
 > `127.0.0.1    localhost`  
 > `::1          localhost`  
-> `127.0.1.1    username.localdomain    username`
+> `127.0.1.1    username.localdomain    username`    
 
 Edit the `/etc/mkinitcpio.conf` file:  
-`HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystem fsck)`  
+> `HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystem fsck)`
 
-(enter into the root missing)
+Run:
+> `mkinitcpio -p linux`    
+
+### Swapfile:    
+I would recommend you allocate RAMsize + 2GB to the swapfile.
+> `fallocate -l 18G /swapfile`    
+> `mkswap /swapfile`
+> `chmod 600 /swapfile`
+> `swapon /swapfile`
+
+Edit `/etc/fstab` to include the swap file in it:
+
+> `# Static information about the filesystems.`
+> `# See fstab(5) for details.`
+>
+> `# <file system> <dir> <type> <options> <dump> <pass>`
+> `# /dev/mapper/LVM00-lvmroot`
+> `UUID=2dfee3da-c567-4509-81bd-46b6220f27a3	/         	ext4      	rw,relatime	0 1`
+>
+> `# /dev/nvme0n1p1`
+> `UUID=55AC-0C30      	/boot     	vfat      	rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro	0 2`
+>
+> `# /dev/mapper/LVM00-lvmhome`
+> `UUID=728f1042-3331-4427-a651-4bb539e83a9e	/home     	ext4      	rw,relatime	0 2`
+>
+> `/swapfile none swap defaults 0 0`
+
 Install packages:  
 > `pacman -Syu efibootmgr metworkmanager base-devel linux-headers iwd linux-firmware pipewire-audio xorg xorg-xinit xorg-server awesome picom mesa`
 
@@ -98,12 +157,17 @@ Edit `arch.conf`:
 Enable NetworkManager: 
 > `systemctl enable NetworkManager`
 
+Before you add a new user, set the root password with `passwd`
 Add new user: 
 > `useradd -mG wheel username`  
 > `passwd username`  
 > `EDITOR=vim visudo`
 
 Edit `/etc/sudoers.tmp` by uncommenting `%wheel ALL=(ALL:ALL) ALL`  
+
+Exit the root and unmount all (should tell you everything's busy):
+> `exit`    
+> `umount -a`
 
 `reboot` the system.  
 ## Outside your live environment (normal usage):    
