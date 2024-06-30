@@ -186,7 +186,8 @@ Edit `arch.conf` in `/boot/loader/entries`:
 
 ### Install for gaming:
 Enable multilib first:
-> `sudo pacman -Syu steam lutris wine wine-mono`
+> `sudo pacman -Syu steam lutris wine wine-mono`    
+> `paru protonup-qt`    
 
 ## Swapfile for hibernation:
 Find your swapfile offset:    
