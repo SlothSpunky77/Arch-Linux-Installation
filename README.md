@@ -113,7 +113,7 @@ Run:
 > `mkinitcpio -p linux`    
 
 ### Swapfile:    
-I would recommend you allocate RAMsize + 2GB to the swapfile.
+I would recommend that you allocate RAMsize + 2GB to the swapfile.
 > `fallocate -l 18G /swapfile`    
 > `mkswap /swapfile`
 > `chmod 600 /swapfile`
