@@ -107,7 +107,7 @@ Edit the `/etc/hosts` file:
 > `127.0.1.1    username.localdomain    username`    
 
 Edit the `/etc/mkinitcpio.conf` file:  
-> `HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystem fsck)`
+> `HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystem fsck)`
 
 Run:
 > `mkinitcpio -p linux`    
@@ -185,8 +185,8 @@ Edit `arch.conf` in `/boot/loader/entries`:
 > `options	root=/dev/LVM00/lvmroot rw`    
 
 ### Install for gaming:
-Enable multilib first:
-> `sudo pacman -Syu steam lutris wine wine-mono`    
+Enable multilib first.
+> `sudo pacman -Syu discord steam lutris wine wine-mono`    
 > `paru protonup-qt`    
 
 ## Swapfile for hibernation:
@@ -200,8 +200,6 @@ Add the `resume=` and `resume-offset=` flags to your `arch.conf`:
 > `initrd	/initramfs-linux.img`    
 > `initrd	/intel-ucode.img`    
 > `options	root=/dev/LVM00/lvmroot resume=/dev/LVM00/lvmroot resume_offset=3887104 rw`
-
-Edit the `/etc/mkinitcpio.conf` file to include the `resume` flag:    
-`HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystem resume fsck)`    
+  
 Regenerate using `sudo mkinitcpio -p linux` and you're good to go after a `reboot`.
 
