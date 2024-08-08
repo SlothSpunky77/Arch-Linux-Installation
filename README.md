@@ -182,7 +182,12 @@ Edit `arch.conf` in `/boot/loader/entries`:
 > `linux	/vmlinuz-linux`    
 > `initrd	/initramfs-linux.img`    
 > `initrd  /intel-ucode.img`    
-> `options	root=/dev/LVM00/lvmroot rw`    
+> `options	root=/dev/LVM00/lvmroot rw`
+
+### ClamAV:
+> `sudo pacman -S clamav`
+> `sudo freshclam`
+> `sudo systemctl enable clamav-freshclam-once.timer`
 
 ### Install for gaming:
 Enable multilib first.
