@@ -3,7 +3,7 @@ What you get: UEFI + systemd-boot + LVM + swap file + Xorg + awesomeWM + tablet 
 Tested on: Intel i7 12th Gen, Iris Xe Graphics, 512G SSD, touch screen foldable
 
 ## Get Started:
-Download the arch linux iso file (add link here) and use an empty USB stick.
+Download the arch linux iso file (https://archlinux.org/download/#download-mirrors) and use an empty USB stick.
 > `cat path/to/archlinux-version-x86_64.iso > /dev/disk/by-id/usb-My_flash_drive`    
 
 Boot into the USB stick.
