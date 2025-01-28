@@ -1,4 +1,4 @@
-# Arch-Linux-Installation
+# Arch-Linux-Installation-Guide
 UEFI + systemd-boot + LVM + swap file + Xorg + awesomeWM + tablet mode  
 Intel i7 12th Gen, Iris Xe Graphics, 512G SSD, touch screen
 
