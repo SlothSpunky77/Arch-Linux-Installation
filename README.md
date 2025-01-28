@@ -153,7 +153,7 @@ Edit `loader.conf`:
 > `#console-mode keep` 
 > `default arch-*`
 
-Go into `/boot/loader/entries` (not sure if the path is right)  
+Go into `/boot/loader/entries`    
 Edit `arch.conf`:
 ```
 title    Arch Linux  
