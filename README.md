@@ -209,5 +209,9 @@ Add the `resume=` and `resume-offset=` flags to your `arch.conf`:
 Regenerate using `sudo mkinitcpio -p linux` and you're good to go after a `reboot`.
 
 ### Gestures for trackpad:
-> `sudo pacman -S xf86-input-libinput xorg-xinput`
+> `sudo pacman -S xf86-input-libinput xorg-xinput wmctrl xdotool`    
 > `paru libinput-gestures`    
+> `libinput-gestures-setup autostart start`    
+## Custom Configuration:    
+> `sudo cp /etc/libinput-gestures.conf ~/.config/`      
+Download my configuration from the files if you need it, else make your own by editing the file in the `.config` directory.
