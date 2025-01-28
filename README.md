@@ -137,7 +137,7 @@ Edit `/etc/fstab` to include the swap file in it:
 > `/swapfile none swap defaults 0 0`
 
 Install packages:  
-> `pacman -Syu efibootmgr metworkmanager base-devel linux-headers iwd linux-firmware pipewire-audio xorg xorg-xinit xorg-server awesome picom mesa`
+> `pacman -Syu efibootmgr networkmanager base-devel linux-headers iwd linux-firmware pipewire-audio xorg xorg-xinit xorg-server awesome picom mesa`
 
 Next,
 > `bootctl --path=/boot install`
