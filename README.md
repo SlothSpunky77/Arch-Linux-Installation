@@ -185,8 +185,8 @@ Edit `arch.conf` in `/boot/loader/entries`:
 > `options	root=/dev/LVM00/lvmroot rw`
 
 ### ClamAV:
-> `sudo pacman -S clamav`
-> `sudo freshclam`
+> `sudo pacman -S clamav`    
+> `sudo freshclam`    
 > `sudo systemctl enable clamav-freshclam-once.timer`
 
 ### Install for gaming:
