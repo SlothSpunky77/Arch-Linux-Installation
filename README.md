@@ -213,5 +213,6 @@ Regenerate using `sudo mkinitcpio -p linux` and you're good to go after a `reboo
 > `paru libinput-gestures`    
 > `libinput-gestures-setup autostart start`    
 ## Custom Configuration:    
-> `sudo cp /etc/libinput-gestures.conf ~/.config/`      
+> `sudo cp /etc/libinput-gestures.conf ~/.config/`
+
 Download my configuration from the files if you need it, else make your own by editing the file in the `.config` directory.
