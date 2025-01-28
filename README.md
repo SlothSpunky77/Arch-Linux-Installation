@@ -10,11 +10,13 @@ Boot into the USB stick.
 
 ## In the live environment:
 Connect to wifi using `iwctl`
-> `[iwd]# device list`        
-> `[iwd]# station wlan0 scan`    
-> `[iwd]# station wlan0 get-networks`    
-> `[iwd]# station wlan0 connect wifi-name`    
-> `[iwd]# exit`   
+```
+[iwd]# device list          
+[iwd]# station wlan0 scan    
+[iwd]# station wlan0 get-networks    
+[iwd]# station wlan0 connect wifi-name    
+[iwd]# exit
+```
 
 Test your connection using `ping archlinux.org`    
 
@@ -100,11 +102,13 @@ Edit `/etc/locale.gen` to uncomment `en_US.UTF-8 UTF-8` and then generate the lo
 Edit `/etc/locale.conf` to insert `LANG=en_US.UTF-8`    
 Edit `/etc/hostname` to insert a custom `hostname`    
 Edit the `/etc/hosts` file:
-> `vim /etc/hosts`  
-> `# See hosts(5) for details.`  
-> `127.0.0.1    localhost`  
-> `::1          localhost`  
-> `127.0.1.1    username.localdomain    username`    
+```
+vim /etc/hosts  
+# See hosts(5) for details.  
+127.0.0.1    localhost  
+::1          localhost  
+127.0.1.1    username.localdomain    username
+```
 
 Edit the `/etc/mkinitcpio.conf` file:  
 > `HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystem fsck)`
@@ -121,20 +125,22 @@ I would recommend that you allocate RAMsize + 2GB to the swapfile.
 
 Edit `/etc/fstab` to include the swap file in it:
 
-> `# Static information about the filesystems.`
-> `# See fstab(5) for details.`
->
-> `# <file system> <dir> <type> <options> <dump> <pass>`
-> `# /dev/mapper/LVM00-lvmroot`
-> `UUID=2dfee3da-c567-4509-81bd-46b6220f27a3	/         	ext4      	rw,relatime	0 1`
->
-> `# /dev/nvme0n1p1`
-> `UUID=55AC-0C30      	/boot     	vfat      	rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro	0 2`
->
-> `# /dev/mapper/LVM00-lvmhome`
-> `UUID=728f1042-3331-4427-a651-4bb539e83a9e	/home     	ext4      	rw,relatime	0 2`
->
-> `/swapfile none swap defaults 0 0`
+```
+# Static information about the filesystems.
+# See fstab(5) for details.
+
+# <file system> <dir> <type> <options> <dump> <pass>
+# /dev/mapper/LVM00-lvmroot
+UUID=2dfee3da-c567-4509-81bd-46b6220f27a3	/         	ext4      	rw,relatime	0 1
+
+# /dev/nvme0n1p1
+UUID=55AC-0C30      	/boot     	vfat      	rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro	0 2
+
+# /dev/mapper/LVM00-lvmhome
+UUID=728f1042-3331-4427-a651-4bb539e83a9e	/home     	ext4      	rw,relatime	0 2
+
+/swapfile none swap defaults 0 0
+```
 
 Install packages:  
 > `pacman -Syu efibootmgr metworkmanager base-devel linux-headers iwd linux-firmware pipewire-audio xorg xorg-xinit xorg-server awesome picom mesa`
@@ -149,10 +155,12 @@ Edit `loader.conf`:
 
 Go into `/boot/loader/entries` (not sure if the path is right)  
 Edit `arch.conf`:
-> `title    Arch Linux`  
-> `linux    /vmlinuz-linux`  
-> `initrd   /initramfs-linux.img`  
-> `options  root=/dev/GROUPNAME/rootname rw`
+```
+title    Arch Linux  
+linux    /vmlinuz-linux  
+initrd   /initramfs-linux.img  
+options  root=/dev/GROUPNAME/rootname rw
+```
 
 Enable NetworkManager: 
 > `systemctl enable NetworkManager`
@@ -178,11 +186,13 @@ Install graphic drivers:
 > `sudo pacman -Syu vulkan-icd-loader vulkan-intel intel-ucode intel-media-driver`
 
 Edit `arch.conf` in `/boot/loader/entries`:
-> `title	Arch Linux`    
-> `linux	/vmlinuz-linux`    
-> `initrd	/initramfs-linux.img`    
-> `initrd  /intel-ucode.img`    
-> `options	root=/dev/LVM00/lvmroot rw`
+```
+title	Arch Linux    
+linux	/vmlinuz-linux    
+initrd	/initramfs-linux.img    
+initrd  /intel-ucode.img    
+options	root=/dev/LVM00/lvmroot rw
+```
 
 ### ClamAV:
 > `sudo pacman -S clamav`    
@@ -190,9 +200,23 @@ Edit `arch.conf` in `/boot/loader/entries`:
 > `sudo systemctl enable clamav-freshclam-once.timer`
 
 ### Install for gaming:
-Enable multilib first.
+Enable multilib first:    
+Edit `/etc/pacman.conf`:    
+Look for the following lines and uncomment them:    
+```
+#[multilib]    
+#Include = /etc/pacman.d/mirrorlist
+```
+Then, install the following:    
 > `sudo pacman -Syu discord steam lutris wine wine-mono`    
-> `paru protonup-qt`    
+> `paru protonup-qt`
+
+
+### Gestures for trackpad:
+> `sudo pacman -S xf86-input-libinput xorg-xinput wmctrl xdotool`    
+> `paru libinput-gestures`    
+> `libinput-gestures-setup autostart start`
+
 
 ## Swapfile for hibernation:
 Find your swapfile offset:    
@@ -200,18 +224,16 @@ Find your swapfile offset:
 
 From the output, take the first number from the physical offset.    
 Add the `resume=` and `resume-offset=` flags to your `arch.conf`:
-> `title	Arch Linux`    
-> `linux	/vmlinuz-linux`    
-> `initrd	/initramfs-linux.img`    
-> `initrd	/intel-ucode.img`    
-> `options	root=/dev/LVM00/lvmroot resume=/dev/LVM00/lvmroot resume_offset=3887104 rw`
+```
+title	Arch Linux    
+linux	/vmlinuz-linux    
+initrd	/initramfs-linux.img    
+initrd	/intel-ucode.img    
+options	root=/dev/LVM00/lvmroot resume=/dev/LVM00/lvmroot resume_offset=3887104 rw
+```
   
 Regenerate using `sudo mkinitcpio -p linux` and you're good to go after a `reboot`.
-
-### Gestures for trackpad:
-> `sudo pacman -S xf86-input-libinput xorg-xinput wmctrl xdotool`    
-> `paru libinput-gestures`    
-> `libinput-gestures-setup autostart start`    
+ 
 ## Custom Configuration:    
 > `sudo cp /etc/libinput-gestures.conf ~/.config/`
 
