@@ -51,7 +51,8 @@ Write the changes:
 Format the EFI partition.
 > `mkfs.fat -F32 /dev/devicename1`
 
-LVM:
+LVM:    
+We're allocating 60GB for root, tools like Android Studio and docker take up space if you're going to use them.    
 > `pvcreate /dev/devicename2`  
 > `vgcreate GROUPNAME /dev/devicename2`  
 > `lvcreate -L 60GB GROUPNAME -n rootname`  
