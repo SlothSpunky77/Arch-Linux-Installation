@@ -143,7 +143,7 @@ UUID=728f1042-3331-4427-a651-4bb539e83a9e	/home     	ext4      	rw,relatime	0 2
 ```
 
 Install packages:  
-> `pacman -Syu efibootmgr metworkmanager base-devel linux-headers iwd linux-firmware pipewire-audio xorg xorg-xinit xorg-server awesome picom mesa`
+> `pacman -Syu efibootmgr networkmanager base-devel linux-headers iwd linux-firmware pipewire-audio xorg xorg-xinit xorg-server awesome picom mesa`
 
 Next,
 > `bootctl --path=/boot install`
