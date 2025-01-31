@@ -1,6 +1,6 @@
 # Arch-Linux-Installation-Guide
 What you get: UEFI + systemd-boot + LVM + swap file + Xorg + awesomeWM + tablet mode  
-Tested on: Intel i7 12th Gen, Iris Xe Graphics, 512G SSD, touch screen foldable
+Tested (2024) on: Intel i7 12th Gen, Iris Xe Graphics, 512G SSD, touch screen foldable
 
 ## Get Started:
 Download the arch linux iso file (https://archlinux.org/download/#download-mirrors) and use an empty USB stick.
