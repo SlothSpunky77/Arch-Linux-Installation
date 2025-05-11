@@ -3,10 +3,10 @@ What you get: UEFI + systemd-boot + LVM + swap file + Xorg + awesomeWM + tablet 
 Tested (2024) on: Intel i7 12th Gen, Iris Xe Graphics, 512G SSD, touch screen foldable
 
 ## Get Started:
-Download the arch linux iso file (https://archlinux.org/download/#download-mirrors) and use an empty USB stick.
+Download the arch linux iso file (https://archlinux.org/download/#download-mirrors) and use an empty USB stick. The following command writes into the USB stick in any linux distribution:
 > `cat path/to/archlinux-version-x86_64.iso > /dev/disk/by-id/usb-My_flash_drive`    
 
-Boot into the USB stick.
+Boot into the USB stick. You have to refer to your laptop's instructions for how to display the boot options.
 
 ## In the live environment:
 Connect to wifi using `iwctl`
