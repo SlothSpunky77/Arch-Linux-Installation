@@ -1,16 +1,17 @@
-# Arch Linux Installation (Lenovo Flex 5 Optimized)
+# Arch Linux Installation (Lenovo Flex 5 • btrfs • X11 Optimized)
 
 This guide installs Arch Linux with a focus on:
 
-- Battery life
+- Battery efficiency
 - Thermal stability
 - Low idle power
-- Smooth performance
+- Smooth responsiveness
 
-Target hardware:
-- Intel 11th/12th gen (Iris Xe)
+Target system:
+- Lenovo Flex 5 (Intel iGPU – Iris Xe)
 - SSD
-- Touchscreen (Flex series)
+- Touchscreen
+- X11 (AwesomeWM or similar)
 
 ---
 
@@ -20,7 +21,7 @@ Target hardware:
 iwctl
 station wlan0 connect <SSID>
 
-## Update system clock
+## Enable time sync
 timedatectl set-ntp true
 
 ---
@@ -31,35 +32,28 @@ pacman -Sy reflector
 
 reflector --country India --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 
-### Why
-- Faster downloads = less CPU/network usage → less energy waste
-
 ---
 
-# 2. Disk Partitioning
+# 2. Partitioning (No LVM)
 
-## Recommended layout (NO LVM)
-
+## Layout
 - EFI: 512M
 - ROOT: rest of disk
 
-### Why NOT LVM
-- No performance gain
-- Adds complexity
-- Not needed for single SSD laptop
+### Why
+- LVM adds complexity without power/performance benefits
+- btrfs gives flexibility + compression natively
 
 ---
 
 # 3. Format Partitions
 
 mkfs.fat -F32 /dev/sdX1
-
-## Use btrfs (recommended)
 mkfs.btrfs /dev/sdX2
 
 ---
 
-# 4. Mount with Optimizations
+# 4. Mount with Performance Flags
 
 mount -o compress=zstd,noatime /dev/sdX2 /mnt
 
@@ -67,8 +61,8 @@ mkdir /mnt/boot
 mount /dev/sdX1 /mnt/boot
 
 ### Why
-- zstd compression → fewer disk reads
-- noatime → avoids unnecessary writes
+- zstd → fewer disk reads → lower power usage
+- noatime → prevents constant disk writes
 
 ---
 
@@ -77,7 +71,7 @@ mount /dev/sdX1 /mnt/boot
 pacstrap /mnt base linux linux-firmware intel-ucode
 
 ### Why
-- intel-ucode improves CPU stability + power states
+- intel-ucode improves CPU behavior and stability
 
 ---
 
@@ -128,12 +122,6 @@ initrd /intel-ucode.img
 initrd /initramfs-linux.img
 options root=UUID=<your-uuid> rw quiet loglevel=3 nowatchdog intel_pstate=active i915.enable_psr=1 i915.enable_fbc=1
 
-### Why these kernel params
-
-- quiet/loglevel → fewer CPU wakeups
-- intel_pstate → modern CPU power scaling
-- i915 tweaks → lower GPU power usage
-
 ---
 
 # 11. Networking
@@ -154,12 +142,13 @@ EDITOR=nano visudo
 
 ---
 
-# 13. Install Essential Packages
+# 13. Install Core System Packages
 
 pacman -S \
 sudo vim git base-devel \
 mesa \
 xf86-input-libinput \
+xorg-server xorg-xinit \
 acpi acpid \
 thermald \
 tlp \
@@ -169,19 +158,32 @@ zram-generator
 
 # 14. Enable Services
 
+systemctl enable NetworkManager
 systemctl enable acpid
 systemctl enable thermald
 systemctl enable tlp
 
-### Why
+---
 
-- thermald → prevents overheating using Intel hardware controls :contentReference[oaicite:1]{index=1}  
-- TLP → applies aggressive power-saving automatically :contentReference[oaicite:2]{index=2}  
-- acpid → proper laptop event handling  
+# 15. Power Management (CRITICAL)
+
+### TLP
+- Applies CPU scaling, PCIe, USB, WiFi power optimizations automatically  
+- Works without manual tuning :contentReference[oaicite:1]{index=1}  
+
+### thermald
+- Prevents overheating before hardware throttling kicks in  
+- Uses Intel thermal controls for smoother performance :contentReference[oaicite:2]{index=2}  
+
+### Important Rule
+DO NOT install:
+- power-profiles-daemon
+
+These tools conflict with each other.
 
 ---
 
-# 15. Configure ZRAM (Replace Swap)
+# 16. Configure ZRAM (Replace Swap)
 
 nano /etc/systemd/zram-generator.conf
 
@@ -189,20 +191,15 @@ nano /etc/systemd/zram-generator.conf
 zram-size = ram / 2
 compression-algorithm = zstd
 
-### Why
-- Faster than disk swap
-- Reduces SSD writes
-- Better battery efficiency
-
 ---
 
-# 16. SSD Optimization
+# 17. SSD Maintenance
 
 systemctl enable fstrim.timer
 
 ---
 
-# 17. WiFi Power Saving
+# 18. WiFi Power Saving
 
 mkdir -p /etc/NetworkManager/conf.d
 
@@ -213,27 +210,42 @@ wifi.powersave = 2
 
 ---
 
-# 18. Touchscreen + Auto-Rotation
+# 19. Touchscreen + Rotation
 
 pacman -S iio-sensor-proxy
 systemctl enable iio-sensor-proxy
 
 ---
 
-# 19. Optional: Desktop / WM
+# 20. X11 Setup (No Wayland)
 
-## Lightweight (recommended)
-pacman -S xorg-server xorg-xinit awesome
+## Install Xorg
 
-OR (better battery)
-pacman -S sway
+pacman -S xorg-server xorg-xinit xorg-apps
 
-### Why
-- Wayland often has lower idle power than Xorg
+## Install Window Manager (example)
+
+pacman -S awesome
+
+## Start X
+
+echo "exec awesome" > ~/.xinitrc
+startx
 
 ---
 
-# 20. Final Steps
+# 21. Optional: Compositor (Recommended for X11)
+
+pacman -S picom
+
+### Why
+- Enables vsync → smoother rendering
+- Reduces tearing
+- Minimal overhead if configured correctly
+
+---
+
+# 22. Final Steps
 
 exit
 umount -R /mnt
@@ -241,37 +253,52 @@ reboot
 
 ---
 
-# Post-Install Power Verification
+# Post-Install Verification
 
-Install:
+Install powertop:
+
 pacman -S powertop
 
 Run:
+
 powertop
 
 Check:
-- CPU idle states
-- Wakeups per second
-- Power usage
+- Idle power usage
+- Wakeups/sec
+- CPU states
 
 ---
 
-# Key Design Decisions (Summary)
+# Architecture Summary
 
-## 1. TLP over manual tuning
-TLP enables multiple power optimizations automatically and is still needed because kernel defaults don’t enable everything :contentReference[oaicite:3]{index=3}
+Arch power management works in layers :contentReference[oaicite:3]{index=3}:
 
-## 2. thermald
-Controls thermal behavior before hardware throttling → smoother performance
+1. Kernel level
+   - intel_pstate
+   - i915 GPU parameters
 
-## 3. zram instead of swap
-Improves responsiveness and reduces disk I/O
+2. Userspace tools
+   - TLP (primary controller)
+   - thermald (thermal control)
 
-## 4. btrfs + compression
-Less data read/write → lower energy usage
+This guide optimizes both layers.
 
-## 5. intel_pstate
-Modern CPU scaling improves efficiency vs legacy governors
+---
+
+# Key Design Decisions
+
+## btrfs over ext4
+- Compression reduces disk I/O
+- Better long-term efficiency
+
+## X11 over Wayland
+- Better compatibility with AwesomeWM
+- Stable input handling for touchscreen devices
+
+## TLP + thermald
+- Proven combination for laptops
+- Covers CPU, GPU, PCIe, USB, and thermals
 
 ---
 
@@ -279,17 +306,18 @@ Modern CPU scaling improves efficiency vs legacy governors
 
 Compared to a generic Arch install:
 
-- Lower idle temps
-- Reduced fan noise
-- Better battery life (often +20–40%)
+- Lower idle power draw
+- Reduced fan usage
+- Better battery life (~20–40% improvement typical)
+- Stable thermals under load
 - Faster perceived responsiveness
 
 ---
 
 # Notes
 
-- Do NOT run multiple power tools together (e.g., TLP + power-profiles-daemon)
-- Tune incrementally if stability issues occur
-- Test GPU power flags individually if needed
+- Avoid installing multiple power managers
+- Tune TLP only if necessary (defaults are already optimized)
+- Kernel parameters can be adjusted per device behavior
 
 ---
