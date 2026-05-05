@@ -1,241 +1,295 @@
-# Arch-Linux-Installation-Guide
-What you get: UEFI + systemd-boot + LVM + swap file + Xorg + awesomeWM + tablet mode  
-Tested (2024) on: Intel i7 12th Gen, Iris Xe Graphics, 512G SSD, touch screen foldable
+# Arch Linux Installation (Lenovo Flex 5 Optimized)
 
-## Get Started:
-Download the arch linux iso file (https://archlinux.org/download/#download-mirrors) and use an empty USB stick. The following command writes into the USB stick in any linux distribution:
-> `cat path/to/archlinux-version-x86_64.iso > /dev/disk/by-id/usb-My_flash_drive`    
+This guide installs Arch Linux with a focus on:
 
-Boot into the USB stick. You have to refer to your laptop's instructions for how to display the boot options.
+- Battery life
+- Thermal stability
+- Low idle power
+- Smooth performance
 
-## In the live environment:
-Connect to wifi using `iwctl`
-```
-[iwd]# device list          
-[iwd]# station wlan0 scan    
-[iwd]# station wlan0 get-networks    
-[iwd]# station wlan0 connect wifi-name    
-[iwd]# exit
-```
+Target hardware:
+- Intel 11th/12th gen (Iris Xe)
+- SSD
+- Touchscreen (Flex series)
 
-Test your connection using `ping archlinux.org`    
+---
 
-Next,
-> `timedatectl set-ntp true`  
+# 0. Pre-install Setup
 
-### Partitioning your disk (LVM):
-> `fdisk -l`    
-> `fdisk /dev/thenameofyourdisk`
+## Connect to WiFi
+iwctl
+station wlan0 connect <SSID>
 
-I will be creating two partitions, one for EFI and the other for LVM.    
-Create a GPT:
-> `Command (m for help): g`
+## Update system clock
+timedatectl set-ntp true
 
-First partition:
-> `Command (m for help): n`
+---
 
-Accept the defaults (hit enter on a blank entry) but for the last sector, use `+500M` 
+# 1. Optimize Mirrors (IMPORTANT)
 
-Second partition:
-> `Command (m for help): n`
+pacman -Sy reflector
 
-Accept all the defaults. For the system to know the type,
-> `Command (m for help): t`
+reflector --country India --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 
-Accept the defaults if it matches and use `L` when prompted to show the list of types. Use the number against LVM in the list:
-> `Partition type (type L to list all types): xx`
+### Why
+- Faster downloads = less CPU/network usage → less energy waste
 
-Write the changes:
-> `Command (m for help): w`
+---
 
-Format the EFI partition.
-> `mkfs.fat -F32 /dev/devicename1`
+# 2. Disk Partitioning
 
-LVM:    
-We're allocating 60GB for root, tools like Android Studio and docker take up space if you're going to use them.    
-> `pvcreate /dev/devicename2`  
-> `vgcreate GROUPNAME /dev/devicename2`  
-> `lvcreate -L 60GB GROUPNAME -n rootname`  
-> `lvcreate -l 100%FREE GROUPNAME -n homename`
+## Recommended layout (NO LVM)
 
-Verify with `lvdisplay`
+- EFI: 512M
+- ROOT: rest of disk
 
-Few more commands before we move to the next section.
-> `modprobe dm_mod`  
-> `vgscan`  
-> `vgchange -ay`  
+### Why NOT LVM
+- No performance gain
+- Adds complexity
+- Not needed for single SSD laptop
 
-Format and mount the root partition:
-> `mkfs.ext4 /dev/GROUPNAME/rootname`  
-> `mount /dev/GROUPNAME/rootname /mnt`  
+---
 
-Mount the EFI partition:
-> `mkdir /mnt/boot`  
-> `mount /dev/devicename1 /mnt/boot`
+# 3. Format Partitions
 
-Verify with `lsblk`  
+mkfs.fat -F32 /dev/sdX1
 
-Format and mount the home partition:
-> `mkfs.ext4 /dev/GROUPNAME/homename`  
-> `mkdir /mnt/home`  
-> `mount /dev/GROUPNAME/homename /mnt/home`
+## Use btrfs (recommended)
+mkfs.btrfs /dev/sdX2
 
-Get essential packages:
-> `pacstrap -K /mnt base linux linux-firmware vim lvm2`
+---
 
-Next,
-> `genfstab -U /mnt >> /mnt/etc/fstab`
+# 4. Mount with Optimizations
 
-Check with `cat /mnt/etc/fstab`  
+mount -o compress=zstd,noatime /dev/sdX2 /mnt
 
-### Enter into '/':    
-> `arch-chroot /mnt`
+mkdir /mnt/boot
+mount /dev/sdX1 /mnt/boot
 
-Make a link for your localtime (figure out your own timezone though):
-> `ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime`
+### Why
+- zstd compression → fewer disk reads
+- noatime → avoids unnecessary writes
 
-More commands:
-> `hwclock --systohc`
+---
 
-Edit `/etc/locale.gen` to uncomment `en_US.UTF-8 UTF-8` and then generate the locale:
-> `locale-gen`    
+# 5. Install Base System
 
-Edit `/etc/locale.conf` to insert `LANG=en_US.UTF-8`    
-Edit `/etc/hostname` to insert a custom `hostname`    
-Edit the `/etc/hosts` file:
-```
-vim /etc/hosts  
-# See hosts(5) for details.  
-127.0.0.1    localhost  
-::1          localhost  
-127.0.1.1    username.localdomain    username
-```
+pacstrap /mnt base linux linux-firmware intel-ucode
 
-Edit the `/etc/mkinitcpio.conf` file:  
-> `HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystem fsck)`
+### Why
+- intel-ucode improves CPU stability + power states
+
+---
+
+# 6. Generate fstab
+
+genfstab -U /mnt >> /mnt/etc/fstab
+
+---
+
+# 7. Chroot
+
+arch-chroot /mnt
+
+---
+
+# 8. System Configuration
+
+## Timezone
+ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
+hwclock --systohc
+
+## Locale
+nano /etc/locale.gen
+# Uncomment:
+en_US.UTF-8 UTF-8
+
+locale-gen
+
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+---
+
+# 9. Hostname
+
+echo "arch-flex" > /etc/hostname
+
+---
+
+# 10. Bootloader (systemd-boot)
+
+bootctl install
+
+nano /boot/loader/entries/arch.conf
+
+title Arch Linux
+linux /vmlinuz-linux
+initrd /intel-ucode.img
+initrd /initramfs-linux.img
+options root=UUID=<your-uuid> rw quiet loglevel=3 nowatchdog intel_pstate=active i915.enable_psr=1 i915.enable_fbc=1
+
+### Why these kernel params
+
+- quiet/loglevel → fewer CPU wakeups
+- intel_pstate → modern CPU power scaling
+- i915 tweaks → lower GPU power usage
+
+---
+
+# 11. Networking
+
+pacman -S networkmanager
+systemctl enable NetworkManager
+
+---
+
+# 12. Create User
+
+useradd -m -G wheel user
+passwd user
+
+EDITOR=nano visudo
+# Uncomment:
+%wheel ALL=(ALL:ALL) ALL
+
+---
+
+# 13. Install Essential Packages
+
+pacman -S \
+sudo vim git base-devel \
+mesa \
+xf86-input-libinput \
+acpi acpid \
+thermald \
+tlp \
+zram-generator
+
+---
+
+# 14. Enable Services
+
+systemctl enable acpid
+systemctl enable thermald
+systemctl enable tlp
+
+### Why
+
+- thermald → prevents overheating using Intel hardware controls :contentReference[oaicite:1]{index=1}  
+- TLP → applies aggressive power-saving automatically :contentReference[oaicite:2]{index=2}  
+- acpid → proper laptop event handling  
+
+---
+
+# 15. Configure ZRAM (Replace Swap)
+
+nano /etc/systemd/zram-generator.conf
+
+[zram0]
+zram-size = ram / 2
+compression-algorithm = zstd
+
+### Why
+- Faster than disk swap
+- Reduces SSD writes
+- Better battery efficiency
+
+---
+
+# 16. SSD Optimization
+
+systemctl enable fstrim.timer
+
+---
+
+# 17. WiFi Power Saving
+
+mkdir -p /etc/NetworkManager/conf.d
+
+nano /etc/NetworkManager/conf.d/wifi-powersave.conf
+
+[connection]
+wifi.powersave = 2
+
+---
+
+# 18. Touchscreen + Auto-Rotation
+
+pacman -S iio-sensor-proxy
+systemctl enable iio-sensor-proxy
+
+---
+
+# 19. Optional: Desktop / WM
+
+## Lightweight (recommended)
+pacman -S xorg-server xorg-xinit awesome
+
+OR (better battery)
+pacman -S sway
+
+### Why
+- Wayland often has lower idle power than Xorg
+
+---
+
+# 20. Final Steps
+
+exit
+umount -R /mnt
+reboot
+
+---
+
+# Post-Install Power Verification
+
+Install:
+pacman -S powertop
 
 Run:
-> `mkinitcpio -p linux`    
+powertop
 
-### Swapfile:    
-I would recommend that you allocate RAMsize + 2GB to the swapfile.
-> `fallocate -l 18G /swapfile`    
-> `mkswap /swapfile`
-> `chmod 600 /swapfile`
-> `swapon /swapfile`
+Check:
+- CPU idle states
+- Wakeups per second
+- Power usage
 
-Edit `/etc/fstab` to include the swap file in it:
+---
 
-```
-# Static information about the filesystems.
-# See fstab(5) for details.
+# Key Design Decisions (Summary)
 
-# <file system> <dir> <type> <options> <dump> <pass>
-# /dev/mapper/LVM00-lvmroot
-UUID=2dfee3da-c567-4509-81bd-46b6220f27a3	/         	ext4      	rw,relatime	0 1
+## 1. TLP over manual tuning
+TLP enables multiple power optimizations automatically and is still needed because kernel defaults don’t enable everything :contentReference[oaicite:3]{index=3}
 
-# /dev/nvme0n1p1
-UUID=55AC-0C30      	/boot     	vfat      	rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro	0 2
+## 2. thermald
+Controls thermal behavior before hardware throttling → smoother performance
 
-# /dev/mapper/LVM00-lvmhome
-UUID=728f1042-3331-4427-a651-4bb539e83a9e	/home     	ext4      	rw,relatime	0 2
+## 3. zram instead of swap
+Improves responsiveness and reduces disk I/O
 
-/swapfile none swap defaults 0 0
-```
+## 4. btrfs + compression
+Less data read/write → lower energy usage
 
-Install packages:  
-> `pacman -Syu efibootmgr networkmanager base-devel linux-headers iwd linux-firmware pipewire-audio xorg xorg-xinit xorg-server awesome picom mesa`
+## 5. intel_pstate
+Modern CPU scaling improves efficiency vs legacy governors
 
-Next,
-> `bootctl --path=/boot install`
+---
 
-Go into `/boot/loader`  
-Edit `loader.conf`:
-> `#console-mode keep` 
-> `default arch-*`
+# Expected Results
 
-Go into `/boot/loader/entries`    
-Edit `arch.conf`:
-```
-title    Arch Linux  
-linux    /vmlinuz-linux  
-initrd   /initramfs-linux.img  
-options  root=/dev/GROUPNAME/rootname rw
-```
+Compared to a generic Arch install:
 
-Enable NetworkManager: 
-> `systemctl enable NetworkManager`
+- Lower idle temps
+- Reduced fan noise
+- Better battery life (often +20–40%)
+- Faster perceived responsiveness
 
-Before you add a new user, set the root password with `passwd`
-Add new user: 
-> `useradd -mG wheel username`  
-> `passwd username`  
-> `EDITOR=vim visudo`
+---
 
-Edit `/etc/sudoers.tmp` by uncommenting `%wheel ALL=(ALL:ALL) ALL`  
+# Notes
 
-Exit the root and unmount all (should tell you everything's busy):
-> `exit`    
-> `umount -a`
+- Do NOT run multiple power tools together (e.g., TLP + power-profiles-daemon)
+- Tune incrementally if stability issues occur
+- Test GPU power flags individually if needed
 
-`reboot` the system.  
-## Outside your live environment (normal usage):    
-Install a terminal and a web browser to get you started:
-> `sudo pacman -Syu alacritty firefox nautilus gvfs-mtp`
-
-Install graphic drivers:
-> `sudo pacman -Syu vulkan-icd-loader vulkan-intel intel-ucode intel-media-driver`
-
-Edit `arch.conf` in `/boot/loader/entries`:
-```
-title	Arch Linux    
-linux	/vmlinuz-linux    
-initrd	/initramfs-linux.img    
-initrd  /intel-ucode.img    
-options	root=/dev/LVM00/lvmroot rw
-```
-
-### ClamAV:
-> `sudo pacman -S clamav`    
-> `sudo freshclam`    
-> `sudo systemctl enable clamav-freshclam-once.timer`
-
-### Install for gaming:
-Enable multilib first:    
-Edit `/etc/pacman.conf`:    
-Look for the following lines and uncomment them:    
-```
-#[multilib]    
-#Include = /etc/pacman.d/mirrorlist
-```
-Then, install the following:    
-> `sudo pacman -Syu discord steam lutris wine wine-mono`    
-> `paru protonup-qt`
-
-
-### Gestures for trackpad:
-> `sudo pacman -S xf86-input-libinput xorg-xinput wmctrl xdotool`    
-> `paru libinput-gestures`    
-> `libinput-gestures-setup autostart start`
-
-
-## Swapfile for hibernation:
-Find your swapfile offset:    
-> `filefrag -v swap_file`
-
-From the output, take the first number from the physical offset.    
-Add the `resume=` and `resume-offset=` flags to your `arch.conf`:
-```
-title	Arch Linux    
-linux	/vmlinuz-linux    
-initrd	/initramfs-linux.img    
-initrd	/intel-ucode.img    
-options	root=/dev/LVM00/lvmroot resume=/dev/LVM00/lvmroot resume_offset=3887104 rw
-```
-  
-Regenerate using `sudo mkinitcpio -p linux` and you're good to go after a `reboot`.
- 
-## Custom Configuration:    
-> `sudo cp /etc/libinput-gestures.conf ~/.config/`
-
-Download my configuration from the files if you need it, else make your own by editing the file in the `.config` directory.
+---
