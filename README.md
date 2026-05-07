@@ -1,323 +1,271 @@
-# Arch Linux Installation (Lenovo Flex 5 • btrfs • X11 Optimized)
+Arch Linux Installation (Optimized Laptop Setup)
 
-This guide installs Arch Linux with a focus on:
+Target:
 
-- Battery efficiency
-- Thermal stability
-- Low idle power
-- Smooth responsiveness
-
-Target system:
-- Lenovo Flex 5 (Intel iGPU – Iris Xe)
-- SSD
-- Touchscreen
-- X11 (AwesomeWM or similar)
-
----
-
-# 0. Pre-install Setup
-
-## Connect to WiFi
+Lenovo Flex 5
+Intel Iris Xe
+SSD
+Touchscreen
+X11 + AwesomeWM
+btrfs
+Battery + thermal optimized
+1. Connect to Internet
+WiFi
 iwctl
-station wlan0 connect <SSID>
 
-## Enable time sync
+Inside iwctl:
+
+device list
+station wlan0 scan
+station wlan0 get-networks
+station wlan0 connect "SSID"
+exit
+
+Enable time sync:
+
 timedatectl set-ntp true
+2. Update Mirrors
 
----
-
-# 1. Optimize Mirrors (IMPORTANT)
+Install reflector:
 
 pacman -Sy reflector
 
-reflector --country India --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+Generate fast mirrors:
 
----
+reflector \
+--country India \
+--latest 10 \
+--protocol https \
+--sort rate \
+--save /etc/pacman.d/mirrorlist
+3. Partition Disk
 
-# 2. Partitioning (No LVM)
+Launch:
 
-## Layout
-- EFI: 512M
-- ROOT: rest of disk
+cfdisk /dev/nvme0n1
 
-### Why
-- LVM adds complexity without power/performance benefits
-- btrfs gives flexibility + compression natively
+Create:
 
----
+Partition	Size	Type
+EFI	512M	EFI System
+ROOT	Remaining	Linux filesystem
 
-# 3. Format Partitions
+No swap partition needed because zram will be used.
 
-mkfs.fat -F32 /dev/sdX1
-mkfs.btrfs /dev/sdX2
+4. Format Partitions
+mkfs.fat -F32 /dev/nvme0n1p1
+mkfs.btrfs -f /dev/nvme0n1p2
+5. Mount Filesystem
 
----
+Mount root with optimization flags:
 
-# 4. Mount with Performance Flags
+mount -o compress=zstd,noatime /dev/nvme0n1p2 /mnt
 
-mount -o compress=zstd,noatime /dev/sdX2 /mnt
+Mount EFI:
 
-mkdir /mnt/boot
-mount /dev/sdX1 /mnt/boot
+mkdir -p /mnt/boot
+mount /dev/nvme0n1p1 /mnt/boot
 
-### Why
-- zstd → fewer disk reads → lower power usage
-- noatime → prevents constant disk writes
+Why:
 
----
-
-# 5. Install Base System
-
-pacstrap /mnt base linux linux-firmware intel-ucode
-
-### Why
-- intel-ucode improves CPU behavior and stability
-
----
-
-# 6. Generate fstab
-
+compress=zstd
+reduces disk writes
+improves SSD efficiency
+noatime
+prevents unnecessary metadata writes
+6. Install Base System
+pacstrap /mnt \
+base \
+linux \
+linux-firmware \
+intel-ucode \
+btrfs-progs \
+networkmanager \
+sudo \
+vim \
+git
+7. Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
-
----
-
-# 7. Chroot
-
+8. Chroot
 arch-chroot /mnt
-
----
-
-# 8. System Configuration
-
-## Timezone
+9. Configure Time
 ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
 hwclock --systohc
+10. Configure Locale
 
-## Locale
-nano /etc/locale.gen
-# Uncomment:
+Edit locale file:
+
+vim /etc/locale.gen
+
+Uncomment:
+
 en_US.UTF-8 UTF-8
+
+Generate locales:
 
 locale-gen
 
+Set language:
+
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
-
----
-
-# 9. Hostname
-
+11. Hostname
 echo "arch-flex" > /etc/hostname
 
----
+Optional hosts file:
 
-# 10. Bootloader (systemd-boot)
+vim /etc/hosts
+127.0.0.1 localhost
+::1 localhost
+127.0.1.1 arch-flex.localdomain arch-flex
+12. Set Root Password
+passwd
+13. Create User
+useradd -m -G wheel shashank
+passwd shashank
+
+Enable sudo:
+
+EDITOR=vim visudo
+
+Uncomment:
+
+%wheel ALL=(ALL:ALL) ALL
+14. Install Bootloader
+
+Install systemd-boot:
 
 bootctl install
 
-nano /boot/loader/entries/arch.conf
+Get root UUID:
 
+blkid
+
+Create loader entry:
+
+vim /boot/loader/entries/arch.conf
 title Arch Linux
 linux /vmlinuz-linux
 initrd /intel-ucode.img
 initrd /initramfs-linux.img
-options root=UUID=<your-uuid> rw quiet loglevel=3 nowatchdog intel_pstate=active i915.enable_psr=1 i915.enable_fbc=1
+options root=UUID=ROOT_UUID rw quiet loglevel=3 nowatchdog i915.enable_fbc=1
 
----
+Avoid forcing PSR initially because some Iris Xe systems flicker with it.
 
-# 11. Networking
-
-pacman -S networkmanager
-systemctl enable NetworkManager
-
----
-
-# 12. Create User
-
-useradd -m -G wheel user
-passwd user
-
-EDITOR=nano visudo
-# Uncomment:
-%wheel ALL=(ALL:ALL) ALL
-
----
-
-# 13. Install Core System Packages
-
+15. Install Graphics + X11
 pacman -S \
-sudo vim git base-devel \
 mesa \
-xf86-input-libinput \
-xorg-server xorg-xinit \
-acpi acpid \
-thermald \
+xorg-server \
+xorg-xinit \
+xorg-apps \
+xf86-input-libinput
+16. Install Window Manager
+
+Example:
+
+pacman -S awesome picom
+
+Create xinitrc:
+
+echo "exec awesome" > ~/.xinitrc
+
+Launch X11:
+
+startx
+17. Install Power Management
+pacman -S \
 tlp \
+thermald \
+acpi \
+acpid \
+powertop \
 zram-generator
 
----
-
-# 14. Enable Services
+Enable services:
 
 systemctl enable NetworkManager
-systemctl enable acpid
-systemctl enable thermald
 systemctl enable tlp
+systemctl enable thermald
+systemctl enable acpid
+systemctl enable fstrim.timer
 
----
+Do NOT install:
 
-# 15. Power Management (CRITICAL)
+power-profiles-daemon
+auto-cpufreq
 
-### TLP
-- Applies CPU scaling, PCIe, USB, WiFi power optimizations automatically  
-- Works without manual tuning :contentReference[oaicite:1]{index=1}  
+They overlap/conflict with TLP.
 
-### thermald
-- Prevents overheating before hardware throttling kicks in  
-- Uses Intel thermal controls for smoother performance :contentReference[oaicite:2]{index=2}  
-
-### Important Rule
-DO NOT install:
-- power-profiles-daemon
-
-These tools conflict with each other.
-
----
-
-# 16. Configure ZRAM (Replace Swap)
-
-nano /etc/systemd/zram-generator.conf
-
+18. Configure ZRAM
+vim /etc/systemd/zram-generator.conf
 [zram0]
 zram-size = ram / 2
 compression-algorithm = zstd
 
----
+This replaces traditional swap for most laptop workloads.
 
-# 17. SSD Maintenance
-
-systemctl enable fstrim.timer
-
----
-
-# 18. WiFi Power Saving
-
+19. Configure WiFi Power Saving
 mkdir -p /etc/NetworkManager/conf.d
-
-nano /etc/NetworkManager/conf.d/wifi-powersave.conf
-
+vim /etc/NetworkManager/conf.d/wifi-powersave.conf
 [connection]
-wifi.powersave = 2
-
----
-
-# 19. Touchscreen + Rotation
-
+wifi.powersave=3
+20. Touchscreen + Sensors
 pacman -S iio-sensor-proxy
-systemctl enable iio-sensor-proxy
 
----
+No need to manually enable the service.
 
-# 20. X11 Setup (No Wayland)
+21. Reboot
 
-## Install Xorg
-
-pacman -S xorg-server xorg-xinit xorg-apps
-
-## Install Window Manager (example)
-
-pacman -S awesome
-
-## Start X
-
-echo "exec awesome" > ~/.xinitrc
-startx
-
----
-
-# 21. Optional: Compositor (Recommended for X11)
-
-pacman -S picom
-
-### Why
-- Enables vsync → smoother rendering
-- Reduces tearing
-- Minimal overhead if configured correctly
-
----
-
-# 22. Final Steps
+Exit chroot:
 
 exit
+
+Unmount:
+
 umount -R /mnt
+
+Reboot:
+
 reboot
+22. Post-Install Verification
 
----
+Check TLP:
 
-# Post-Install Verification
+sudo tlp-stat -s
 
-Install powertop:
+Check thermals:
 
-pacman -S powertop
+sudo thermald --no-daemon --loglevel=info
 
-Run:
+Check power usage:
 
-powertop
+sudo powertop
 
-Check:
-- Idle power usage
-- Wakeups/sec
-- CPU states
+Important metrics:
 
----
+idle wattage
+wakeups/sec
+package C-states
+Design Decisions
+btrfs
+transparent compression
+reduced SSD writes
+snapshots possible later
+zram instead of swap partition
+lower SSD wear
+better responsiveness under memory pressure
+X11 instead of Wayland
+better AwesomeWM compatibility
+more predictable compositor behavior
+TLP + thermald
+TLP handles platform power management
+thermald handles Intel thermal behavior separately
+Expected Results
 
-# Architecture Summary
+Compared to default Arch:
 
-Arch power management works in layers :contentReference[oaicite:3]{index=3}:
-
-1. Kernel level
-   - intel_pstate
-   - i915 GPU parameters
-
-2. Userspace tools
-   - TLP (primary controller)
-   - thermald (thermal control)
-
-This guide optimizes both layers.
-
----
-
-# Key Design Decisions
-
-## btrfs over ext4
-- Compression reduces disk I/O
-- Better long-term efficiency
-
-## X11 over Wayland
-- Better compatibility with AwesomeWM
-- Stable input handling for touchscreen devices
-
-## TLP + thermald
-- Proven combination for laptops
-- Covers CPU, GPU, PCIe, USB, and thermals
-
----
-
-# Expected Results
-
-Compared to a generic Arch install:
-
-- Lower idle power draw
-- Reduced fan usage
-- Better battery life (~20–40% improvement typical)
-- Stable thermals under load
-- Faster perceived responsiveness
-
----
-
-# Notes
-
-- Avoid installing multiple power managers
-- Tune TLP only if necessary (defaults are already optimized)
-- Kernel parameters can be adjusted per device behavior
-
----
+lower idle power
+quieter fans
+reduced heat spikes
+smoother battery discharge
+faster perceived responsiveness
+better standby efficiency
