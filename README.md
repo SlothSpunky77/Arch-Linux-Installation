@@ -33,7 +33,7 @@ exit
 Enable time sync:
 
 ```
-timedatectl set-ntptrue
+timedatectl set-ntp true
 ```
 
 ---
@@ -43,7 +43,7 @@ timedatectl set-ntptrue
 Install reflector:
 
 ```
-pacman-Sy reflector
+pacman -S reflector
 ```
 
 Generate fast mirrors:
@@ -81,8 +81,8 @@ No swap partition needed because zram will be used.
 # 4. Format Partitions
 
 ```
-mkfs.fat-F32 /dev/nvme0n1p1
-mkfs.btrfs-f /dev/nvme0n1p2
+mkfs.fat -F32 /dev/nvme0n1p1
+mkfs.btrfs -f /dev/nvme0n1p2
 ```
 
 ---
@@ -92,7 +92,7 @@ mkfs.btrfs-f /dev/nvme0n1p2
 Mount root with optimization flags:
 
 ```
-mount-ocompress=zstd,noatime /dev/nvme0n1p2 /mnt
+mount-o compress=zstd,noatime /dev/nvme0n1p2 /mnt
 ```
 
 Mount EFI:
@@ -132,7 +132,7 @@ git
 # 7. Generate fstab
 
 ```
-genfstab-U /mnt >> /mnt/etc/fstab
+genfstab -U /mnt >> /mnt/etc/fstab
 ```
 
 ---
@@ -148,8 +148,8 @@ arch-chroot /mnt
 # 9. Configure Time
 
 ```
-ln-sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
-hwclock--systohc
+ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
+hwclock --systohc
 ```
 
 ---
@@ -177,7 +177,7 @@ locale-gen
 Set language:
 
 ```
-echo"LANG=en_US.UTF-8" > /etc/locale.conf
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
 ```
 
 ---
@@ -213,7 +213,7 @@ passwd
 # 13. Create User
 
 ```
-useradd-m-G wheel shashank
+useradd -m -G wheel shashank
 passwd shashank
 ```
 
@@ -266,7 +266,7 @@ Avoid forcing PSR initially because some Iris Xe systems flicker with it.
 # 15. Install Graphics + X11
 
 ```
-pacman-S \
+pacman -S \
 mesa \
 xorg-server \
 xorg-xinit \
@@ -281,13 +281,13 @@ xf86-input-libinput
 Example:
 
 ```
-pacman-S awesome picom
+pacman -S awesome picom
 ```
 
 Create xinitrc:
 
 ```
-echo"exec awesome" > ~/.xinitrc
+echo "exec awesome" > ~/.xinitrc
 ```
 
 Launch X11:
@@ -301,7 +301,7 @@ startx
 # 17. Install Power Management
 
 ```
-pacman-S \
+pacman -S \
 tlp \
 thermald \
 acpi \
@@ -348,7 +348,7 @@ This replaces traditional swap for most laptop workloads.
 # 19. Configure WiFi Power Saving
 
 ```
-mkdir-p /etc/NetworkManager/conf.d
+mkdir -p /etc/NetworkManager/conf.d
 ```
 
 ```
@@ -365,7 +365,7 @@ wifi.powersave=3
 # 20. Touchscreen + Sensors
 
 ```
-pacman-S iio-sensor-proxy
+pacman -S iio-sensor-proxy
 ```
 
 No need to manually enable the service.
@@ -383,7 +383,7 @@ exit
 Unmount:
 
 ```
-umount-R /mnt
+umount -R /mnt
 ```
 
 Reboot:
