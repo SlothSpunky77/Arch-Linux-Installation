@@ -120,9 +120,9 @@ Run:
 ### Swapfile:    
 I would recommend that you allocate RAMsize + 2GB to the swapfile.
 > `fallocate -l 18G /swapfile`    
-> `mkswap /swapfile`
-> `chmod 600 /swapfile`
-> `swapon /swapfile`
+> `mkswap /swapfile`    
+> `chmod 600 /swapfile`    
+> `swapon /swapfile`    
 
 Edit `/etc/fstab` to include the swap file in it:
 
